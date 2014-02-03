@@ -1,0 +1,6 @@
+*.log
+/target
+/web-app
+*.zip
+*.zip.sha1
+plugin.xml
