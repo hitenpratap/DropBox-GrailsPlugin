@@ -9,8 +9,8 @@ import org.codehaus.groovy.grails.web.json.JSONElement
  */
 class AccessTokenService {
 
-    String app_key = ConfigurationHolder.config.grails.plugins.dropBox.app_key
-    String app_secret = ConfigurationHolder.config.grails.plugins.dropBox.app_secret
+    String appKey = ConfigurationHolder.config.grails.plugins.dropBox.app_key
+    String appSecret = ConfigurationHolder.config.grails.plugins.dropBox.app_secret
 
     def getAuthUrl() {
         URI uri = new URI("https://www.dropbox.com/1/oauth2/authorize")
