@@ -24,9 +24,7 @@ class DropBoxService {
         return displayName + '    ' + email
     }
 
-    def dropBoxFileUpload(String root, String destinationPath,String sourcePath, String accessToken) {
-        Path pathFile = Paths.get(sourcePath)
-        byte[] data = Files.readAllBytes(pathFile)
+    def dropBoxFileUpload(String root, String destinationPath,byte[] data, String accessToken) {
         URL url = new URL("https://api-content.dropbox.com/1/files_put/${root}/${destinationPath}?access_token=${accessToken}")
         HttpURLConnection connection
         try {
