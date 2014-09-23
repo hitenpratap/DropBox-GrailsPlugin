@@ -1,163 +1,60 @@
 package com.dropbox.core
 
 import grails.converters.JSON
+import grails.plugin.dropbox.AbstractDropBoxService
+
 import org.codehaus.groovy.grails.web.json.JSONElement
 
-import java.nio.file.Files
-import java.nio.file.Path
-import java.nio.file.Paths
-
 /**
- * Created by hitenpratap on 2/2/14.
+ * @author hitenpratap
  */
-class DropBoxService {
+class DropBoxService extends AbstractDropBoxService {
 
-    def accountInfo(String accessToken) {
-        StringBuilder stringBuilder = new StringBuilder("https://api.dropbox.com/1/account/info")
-        stringBuilder.append("?access_token=")
-        stringBuilder.append(URLEncoder.encode(accessToken, "UTF-8"))
-        URL url = new URL(stringBuilder.toString())
-        String response = url.text
+    static transactional = false
+
+    String accountInfo(String accessToken) {
+        String response = get('/account/info', accessToken)
         JSONElement contents = JSON.parse(response)
         String displayName = contents.display_name
         String email = contents.email
         return displayName + '    ' + email
     }
 
-    def dropBoxFileUpload(String root, String destinationPath,byte[] data, String accessToken) {
-        URL url = new URL("https://api-content.dropbox.com/1/files_put/${root}/${destinationPath}?access_token=${accessToken}")
+    // root should be 'dropbox', 'sandbox', or 'auto'
+    String dropBoxFileUpload(String root, String destinationPath, byte[] data, String mimeType, String accessToken) {
         HttpURLConnection connection
         try {
-            connection = url.openConnection() as HttpURLConnection
-            connection.setDoOutput(true)
-            connection.setRequestMethod("PUT")
-            connection.setRequestProperty("Content-Type", "mime/type");
-            connection.setRequestProperty("Content-Length", String.valueOf(data.length))
-            OutputStream outputStream = connection.getOutputStream()
-            outputStream.write(data)
-            outputStream.flush()
-            InputStreamReader inputStreamReader = new InputStreamReader(connection.getInputStream())
-            String response = inputStreamReader.text
-            return response
+            URL url = new URL("https://api-content.dropbox.com/1/files_put/${root}/${destinationPath}${toQueryString(accessToken)}")
+            connection = createOutputConnection(url, 'PUT', mimeType, data.length)
+            write connection, data
+            return read(connection)
         }
         finally {
             connection.disconnect()
         }
     }
 
-    def getObjectMetaData(String root,String path,String accessToken){
-        StringBuilder stringBuilder = new StringBuilder("https://api.dropbox.com/1/metadata/${root}/${path}")
-        stringBuilder.append("?access_token=")
-        stringBuilder.append(URLEncoder.encode(accessToken, "UTF-8"))
-        URL url = new URL(stringBuilder.toString())
-        String response = url.text
-        return response
+    String getObjectMetaData(String root, String path, String accessToken) {
+        return get("/metadata/${root}/${path}", accessToken)
     }
 
-
-    def createNewFolder(String root,String path,String accessToken){
-        StringBuilder tokenUri=new StringBuilder("root=")
-        tokenUri.append(URLEncoder.encode(root,"UTF-8"))
-        tokenUri.append("&path=")
-        tokenUri.append(URLEncoder.encode(path,"UTF-8"))
-        URL url=new URL("https://api.dropbox.com/1/fileops/create_folder?access_token=${accessToken}")
-        HttpURLConnection connection
-        try {
-            connection = (HttpURLConnection) url.openConnection();
-            connection.setDoOutput(true);
-            connection.setRequestMethod("POST");
-            connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
-            connection.setRequestProperty("Content-Length", "" + tokenUri.toString().length());
-            OutputStreamWriter outputStreamWriter = new OutputStreamWriter(connection.getOutputStream());
-            outputStreamWriter.write(tokenUri.toString());
-            outputStreamWriter.flush();
-            InputStreamReader inputStreamReader=new InputStreamReader(connection.getInputStream())
-            String response=inputStreamReader.text
-            return response
-
-        } finally {
-            connection?.disconnect()
-        }
+    String createNewFolder(String root, String path, String accessToken) {
+        String bodyArgs = encodeParams([root: root, path: path])
+        return post('/fileops/create_folder', bodyArgs, accessToken)
     }
 
-    def copyOps(String root,String fromPath,String toPath,String accessToken) {
-        StringBuilder tokenUri=new StringBuilder("root=")
-        tokenUri.append(URLEncoder.encode(root,"UTF-8"))
-        tokenUri.append("&from_path=")
-        tokenUri.append(URLEncoder.encode(fromPath,"UTF-8"))
-        tokenUri.append("&to_path=")
-        tokenUri.append(URLEncoder.encode(toPath,"UTF-8"))
-        URL url=new URL("https://api.dropbox.com/1/fileops/copy?access_token=${accessToken}")
-        HttpURLConnection connection
-        try {
-            connection = (HttpURLConnection) url.openConnection();
-            connection.setDoOutput(true);
-            connection.setRequestMethod("POST");
-            connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
-            connection.setRequestProperty("Content-Length", "" + tokenUri.toString().length());
-            OutputStreamWriter outputStreamWriter = new OutputStreamWriter(connection.getOutputStream());
-            outputStreamWriter.write(tokenUri.toString());
-            outputStreamWriter.flush();
-            InputStreamReader inputStreamReader=new InputStreamReader(connection.getInputStream())
-            String response=inputStreamReader.text
-            return response
-
-        } finally {
-            connection?.disconnect()
-        }
+    String copyOps(String root, String fromPath, String toPath, String accessToken) {
+        String bodyArgs = encodeParams([root: root, from_path: fromPath, to_path: toPath])
+        return post('/fileops/copy', bodyArgs, accessToken)
     }
 
-    def deleteFileOps(String root,String path,String accessToken){
-        StringBuilder tokenUri=new StringBuilder("root=")
-        tokenUri.append(URLEncoder.encode(root,"UTF-8"))
-        tokenUri.append("&path=")
-        tokenUri.append(URLEncoder.encode(path,"UTF-8"))
-        URL url=new URL("https://api.dropbox.com/1/fileops/delete?access_token=${accessToken}")
-        HttpURLConnection connection
-        try {
-            connection = (HttpURLConnection) url.openConnection();
-            connection.setDoOutput(true);
-            connection.setRequestMethod("POST");
-            connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
-            connection.setRequestProperty("Content-Length", "" + tokenUri.toString().length());
-            OutputStreamWriter outputStreamWriter = new OutputStreamWriter(connection.getOutputStream());
-            outputStreamWriter.write(tokenUri.toString());
-            outputStreamWriter.flush();
-            InputStreamReader inputStreamReader=new InputStreamReader(connection.getInputStream())
-            String response=inputStreamReader.text
-            return response
-
-        } finally {
-            connection?.disconnect()
-        }
+    String deleteFileOps(String root, String path, String accessToken) {
+        String bodyArgs = encodeParams([root: root, path: path])
+        return post('/fileops/delete', bodyArgs, accessToken)
     }
 
-    def moveOps(String root,String fromPath,String toPath,String accessToken) {
-        StringBuilder tokenUri=new StringBuilder("root=")
-        tokenUri.append(URLEncoder.encode(root,"UTF-8"))
-        tokenUri.append("&from_path=")
-        tokenUri.append(URLEncoder.encode(fromPath,"UTF-8"))
-        tokenUri.append("&to_path=")
-        tokenUri.append(URLEncoder.encode(toPath,"UTF-8"))
-        URL url=new URL("https://api.dropbox.com/1/fileops/move?access_token=${accessToken}")
-        HttpURLConnection connection
-        try {
-            connection = (HttpURLConnection) url.openConnection();
-            connection.setDoOutput(true);
-            connection.setRequestMethod("POST");
-            connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
-            connection.setRequestProperty("Content-Length", "" + tokenUri.toString().length());
-            OutputStreamWriter outputStreamWriter = new OutputStreamWriter(connection.getOutputStream());
-            outputStreamWriter.write(tokenUri.toString());
-            outputStreamWriter.flush();
-            InputStreamReader inputStreamReader=new InputStreamReader(connection.getInputStream())
-            String response=inputStreamReader.text
-            return response
-
-        } finally {
-            connection?.disconnect()
-        }
+    String moveOps(String root, String fromPath, String toPath, String accessToken) {
+        String bodyArgs = encodeParams([root: root, from_path: fromPath, to_path: toPath])
+        return post('/fileops/move', bodyArgs, accessToken)
     }
-
-
 }

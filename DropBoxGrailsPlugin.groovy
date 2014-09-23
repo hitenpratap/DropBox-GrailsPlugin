@@ -6,7 +6,7 @@ class DropBoxGrailsPlugin {
     def documentation = 'https://github.com/hitenpratap/DropBox-GrailsPlugin/wiki/DropBox-for-Grails'
     def license = 'APACHE'
     def developers = [
-            [name: 'Hiten Pratap Singh', email: 'hitenpratap99@gmail.com',github:'https://github.com/hitenpratap']
+        [name: 'Hiten Pratap Singh', email: 'hitenpratap99@gmail.com',github:'https://github.com/hitenpratap']
     ]
     def issueManagement = [system: 'GITHUB', url: 'https://github.com/hitenpratap/DropBox-GrailsPlugin/issues']
     def scm = [url: 'https://github.com/hitenpratap/DropBox-GrailsPlugin']
