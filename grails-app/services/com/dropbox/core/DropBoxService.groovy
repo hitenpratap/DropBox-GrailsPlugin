@@ -13,7 +13,7 @@ class DropBoxService extends AbstractDropBoxService {
     static transactional = false
 
     String accountInfo(String accessToken) {
-        String response = get('/account/info', accessToken)
+        String response = get('/account/info', [access_token: accessToken])
         JSONElement contents = JSON.parse(response)
         String displayName = contents.display_name
         String email = contents.email
@@ -24,7 +24,7 @@ class DropBoxService extends AbstractDropBoxService {
     String dropBoxFileUpload(String root, String destinationPath, byte[] data, String mimeType, String accessToken) {
         HttpURLConnection connection
         try {
-            URL url = new URL("https://api-content.dropbox.com/1/files_put/${root}/${destinationPath}${toQueryString(accessToken)}")
+            URL url = new URL("https://api-content.dropbox.com/1/files_put/${root}/${destinationPath}${encodeParams([access_token: accessToken])}")
             connection = createOutputConnection(url, 'PUT', mimeType, data.length)
             write connection, data
             return read(connection)
@@ -35,7 +35,7 @@ class DropBoxService extends AbstractDropBoxService {
     }
 
     String getObjectMetaData(String root, String path, String accessToken) {
-        return get("/metadata/${root}/${path}", accessToken)
+        return get("/metadata/${root}/${path}", [access_token: accessToken])
     }
 
     String createNewFolder(String root, String path, String accessToken) {
@@ -59,7 +59,7 @@ class DropBoxService extends AbstractDropBoxService {
     }
 
     /* creates link for sharing a file or returns a share link if existing. */
-    String shares(String path, accessToken) {
-        return get("/shares/auto/${path}", accessToken)
+    String shares(String path, Map params) {
+        return get("/shares/auto/${path}", params)
     }
 }
