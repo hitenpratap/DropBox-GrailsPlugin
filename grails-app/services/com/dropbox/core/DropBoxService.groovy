@@ -57,4 +57,9 @@ class DropBoxService extends AbstractDropBoxService {
         String bodyArgs = encodeParams([root: root, from_path: fromPath, to_path: toPath])
         return post('/fileops/move', bodyArgs, accessToken)
     }
+
+    /* creates link for sharing a file or returns a share link if existing. */
+    String shares(String path, accessToken) {
+        return get("/shares/auto/${path}", accessToken)
+    }
 }
