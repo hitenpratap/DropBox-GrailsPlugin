@@ -4,12 +4,12 @@ abstract class AbstractDropBoxService {
 
     static final String URL_ROOT = 'https://api.dropbox.com/1'
 
-    protected String get(String uri, String accessToken) {
-        return new URL("${URL_ROOT}${uri}${toQueryString(accessToken)}").text
+    protected String get(String uri, Map params) {
+        return new URL("${URL_ROOT}${uri}?${encodeParams(params)}").text
     }
 
     protected post(String uri, String body, String accessToken) {
-        URL url = new URL("${URL_ROOT}${uri}${toQueryString(accessToken)}")
+        URL url = new URL("${URL_ROOT}${uri}?${encodeParams([access_token: accessToken])}")
         HttpURLConnection connection
         try {
             connection = createOutputConnection(url, 'POST', 'application/x-www-form-urlencoded', body.length())
@@ -45,10 +45,6 @@ abstract class AbstractDropBoxService {
 
     protected String read(HttpURLConnection connection) {
         return new InputStreamReader(connection.inputStream).text
-    }
-
-    protected String toQueryString(String accessToken) {
-        return accessToken ? ('?' + encodeParams([access_token: accessToken])) : ''
     }
 
     protected String encodeParams(Map params) {
